@@ -1,4 +1,4 @@
- # 生产环境读库
+ # mysql数据库配置
 db_config:
   host: ""
   port: 0
