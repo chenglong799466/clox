@@ -17,12 +17,7 @@ import (
 )
 
 var (
-	tableName = flag.String("table", "111", "input generate table")
-	//dbUser    = "jacklcheng"
-	//dbPass    = "Jacklcheng@2024"
-	//dbHost    = "43.153.70.226"
-	//dbPort    = "3306"
-	//dbName    = "qcloud_market"
+	tableName = flag.String("table", "default", "input generate table")
 )
 
 // CreateTable represents the result of "show create table" statement.
@@ -95,7 +90,7 @@ func generateCodeFile(info *code_generator.TemplateData, templateFile, outputFil
 	}
 
 	var funcMap = template.FuncMap{
-		// The name "inc" is what the function will be called in the template text.
+		// the function will be called in the template text.
 		"group":        code_generator.Group,
 		"sortMap":      code_generator.SortMap,
 		"getMaxLength": code_generator.GetMaxLength,

@@ -12,8 +12,8 @@ type Config struct {
 
 // DBConfig ...
 type DBConfig struct {
-	User     string `mapstructure:"user"`
-	PWD      string `mapstructure:"passwd"`
+	User     string `mapstructure:"username"`
+	PWD      string `mapstructure:"password"`
 	Host     string `mapstructure:"host"`
 	Port     int32  `mapstructure:"port"`
 	DataBase string `mapstructure:"database"`
