@@ -1,0 +1,7 @@
+ # 生产环境读库
+db_config:
+  host: ""
+  port: 0
+  user: ""
+  passwd: ""
+  database: ""

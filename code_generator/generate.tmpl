@@ -1,0 +1,119 @@
+package main
+
+import(
+"gorm.io/gorm"
+"errors"
+"fmt"
+{{- range .Imports}}
+"{{.}}"
+{{- end}}
+)
+
+// ...
+const (
+    Table{{.StructName}}      = "{{.TableName}}"
+)
+
+// {{.StructName}} {{.Comment}}
+type {{.StructName}} struct {
+{{- range .Columns}}
+    {{.FiledName}}  {{.Type}}  `gorm:"{{.GormTag}}"`  // {{.FiledName}} {{.Comment}}
+{{- end}}
+}
+
+// {{.StructName}}Repository
+type {{.StructName}}Repository struct{
+    Db   *gorm.DB
+    QLog *zap.Logger
+}
+
+// {{.StructName}}Cond
+type {{.StructName}}Cond struct{
+{{- $maxFiled := (getMaxLength .Columns "Filed" )}}
+{{- $maxType := (getMaxLength .Columns "Type" )}}
+{{- range .Columns}}
+    {{fillBlank .FiledName $maxFiled }}[]{{fillBlank .Type $maxType }} // {{.Comment}}
+{{- end}}
+    {{fillBlank "PageNum" $maxFiled }} int // 分页参数
+    {{fillBlank "PageSize" $maxFiled }} int // 分页参数
+}
+
+// Query 根据查询条件查询
+func (op *{{.StructName}}Repository) Query(cond *{{.StructName}}Cond) ([]*{{.StructName}}, int64, error) {
+    if op.Db == nil {
+        return nil, 0, errors.New("db nil")
+    }
+
+    table := op.Db.Table(Table{{.StructName}})
+    var results []*{{.StructName}}
+    var total int64
+    table = fill{{.StructName}}Cond(table, cond)
+
+    if cond.PageSize > 0 && cond.PageNum > 0 {
+        limit := cond.PageSize
+        offset := (cond.PageNum - 1) * cond.PageSize
+        if searchRes := table.Count(&total).Limit(limit).Offset(offset).Find(&results); searchRes.Error != nil {
+            op.QLog.Error(fmt.Sprintf("{{.StructName}}Repository Query err:%v", searchRes.Error))
+            return nil, 0, searchRes.Error
+        }
+    } else {
+        if searchRes := table.Count(&total).Find(&results); searchRes.Error != nil {
+            op.QLog.Error(fmt.Sprintf("{{.StructName}}Repository Query err:%v", searchRes.Error))
+            return nil, 0, searchRes.Error
+        }
+    }
+    return results, total, nil
+}
+
+// fill{{.StructName}}Cond 填充查询条件
+{{- $StructName := .StructName}}
+func fill{{.StructName}}Cond(table *gorm.DB, cond *{{.StructName}}Cond) *gorm.DB {
+{{- range $index, $value := group .Columns 10}}
+    table = fill{{$StructName}}Cond{{sortMap $index}}(table, cond)
+{{- end}}
+return table
+}
+{{ range $index, $value := group .Columns 10}}
+// fill{{$StructName}}Cond 填充查询条件属性(不超过80行)
+func fill{{$StructName}}Cond{{sortMap $index}}(table *gorm.DB, cond *{{$StructName}}Cond) *gorm.DB {
+{{range $item := $value}}
+    if len(cond.{{.FiledName}}) > 0 {
+        table = table.Where("{{$item.ColumnName}} in (?)", cond.{{.FiledName}})
+    }
+{{- end}}
+    return table
+}
+{{- end}}
+
+
+// Create ...
+func (op *{{.StructName}}Repository) Create(row *{{.StructName}}) (uint64, error) {
+
+    if row.Id > 0 {
+        op.QLog.Error("row Id > 0")
+        return 0, errors.New("row Id err")
+    }
+
+    table := op.Db.Table(Table{{.StructName}})
+    if err := table.Create(&row).Error; err != nil {
+        op.QLog.Error(fmt.Sprintf("{{.StructName}}Repository Create err:%v", err))
+        return 0, err
+    }
+    return row.Id, nil
+}
+
+// Update ...
+func (op *{{.StructName}}Repository) Update(row *{{.StructName}}) (uint64, error) {
+
+    if row.Id == 0 {
+        op.QLog.Error("row Id == 0")
+        return 0, errors.New("row Id err")
+    }
+
+    table := op.Db.Table(Table{{.StructName}})
+    if err := table.Where("id = ?", row.Id).Updates(&row).Error; err != nil {
+        op.QLog.Error(fmt.Sprintf("{{.StructName}}Repository Update err:%v", err))
+        return 0, err
+    }
+    return row.Id, nil
+}
