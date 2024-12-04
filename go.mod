@@ -1,6 +1,6 @@
 module colx
 
-go 1.21.4
+go 1.21
 
 require (
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20231124053542-069631e2ecfe
