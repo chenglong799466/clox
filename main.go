@@ -30,7 +30,8 @@ type CreateTable struct {
 
 func main() {
 	flag.Parse()
-	if len(*tableName) == 0 {
+	v := *tableName
+	if len(v) == 0 {
 		log.Fatalf("table name is empty")
 	}
 
@@ -41,7 +42,7 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	showCreateTable := fmt.Sprintf("show create table %s;", *tableName)
+	showCreateTable := fmt.Sprintf("show create table %s;", v)
 	var res CreateTable
 	if err = db.Raw(showCreateTable).Find(&res).Error; err != nil {
 		log.Fatalf("failed to retrieve create table statement: %v", err)
